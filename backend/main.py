@@ -86,8 +86,7 @@ def load_index(file_name):
     faiss_index = FAISS.load_local(
         index_name=file_name,
         folder_path=folder_path,
-        embeddings=bedrock_embeddings,
-        allow_dangerous_deserialization=True
+        embeddings=bedrock_embeddings
     )
     return faiss_index
 
@@ -153,7 +152,7 @@ async def upload_file(file: UploadFile = File(...)):
 @app.post("/query", response_model=QueryResponse)
 async def query(request: QueryRequest):
     try:
-        file_name = f"{request.request_id}.bin"
+        file_name = f"{request.request_id}"
         vectorstore = load_index(file_name)
         llm = get_llm()
         
