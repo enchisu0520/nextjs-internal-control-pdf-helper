@@ -4,17 +4,21 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const [question, setQuestion] = useState('');
-  const [response, setResponse] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [response, setResponse] = useState<{
+    submittedDate?: string;
+    finedAmount?: string;
+  }>({});
   const [loading, setLoading] = useState(false);
   const [requestId, setRequestId] = useState('');
   const [chunks, setChunks] = useState(0);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      setFile(selectedFile);
+      setFiles(prevFiles => [...prevFiles, selectedFile]);
       
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -37,24 +41,53 @@ export default function Home() {
     }
   };
 
+  const toggleFileSelection = (fileName: string) => {
+    const newSelection = new Set(selectedFiles);
+    if (newSelection.has(fileName)) {
+      newSelection.delete(fileName);
+    } else {
+      newSelection.add(fileName);
+    }
+    setSelectedFiles(newSelection);
+  };
+
   const handleQuery = async () => {
-    if (!requestId || !question) return;
+    if (!requestId || selectedFiles.size === 0) return;
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/query', {
+      setResponse({}); // Clear previous responses
+
+      // Query for submitted date
+      const dateResponse = await fetch('http://localhost:8000/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           request_id: requestId,
-          question: question,
+          question: "請用繁體中文回答，檔案的提交日期是什麼？請以「民國xx年xx月xx日」的格式回答",
         }),
       });
+      const dateData = await dateResponse.json();
 
-      const data = await response.json();
-      setResponse(data.response);
+      // Query for fined amount
+      const fineResponse = await fetch('http://localhost:8000/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request_id: requestId,
+          question: "請用繁體中文回答，證券商被罰款多少錢？請以「新臺幣xx萬元」的格式回答",
+        }),
+      });
+      const fineData = await fineResponse.json();
+
+      setResponse({
+        submittedDate: dateData.response,
+        finedAmount: fineData.response,
+      });
     } catch (error) {
       console.error('Error querying:', error);
     } finally {
@@ -63,60 +96,150 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Document Query System
-        </h1>
+    <main className="h-screen bg-[#1e1e1e] text-white flex flex-col p-2 gap-2">
+      <div className="flex gap-2">
+        {/* Header - Source */}
+        <div className={`border-r border-gray-700 flex items-center justify-between px-4 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-12' : 'w-[280px] min-w-[280px]'}`}>
+          <h2 className={`text-lg truncate p-4 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>券輔部AI平台</h2>
+          <button 
+            className="p-0.5 text-[10px] hover:bg-[#2d2d2d] rounded"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          >
+            {isSidebarCollapsed ? '→' : '←'}
+          </button>
+        </div>
+      </div>
 
-        <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <input
-              type="file"
-              accept=".txt"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer text-blue-500 hover:text-blue-600"
-            >
-              {file ? file.name : 'Click to upload TXT file'}
-            </label>
+      <div className="flex gap-2 flex-1">
+        {/* Top Panel - Source */}
+        <div className={`border-r border-gray-700 flex flex-col transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-12 min-w-12' : 'w-[280px] min-w-[280px]'}`}>
+          <div className={`p-4 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>
+            <div className="mb-4">
+              <button className="w-full flex items-center gap-2 px-4 py-2 text-sm bg-[#2d2d2d] rounded-md hover:bg-[#3d3d3d]">內控聲明書小幫手</button>
+            </div>
           </div>
-
-          {chunks > 0 && (
-            <p className="text-sm text-gray-600">
-              Document processed into {chunks} chunks
-            </p>
-          )}
-
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Enter your question"
-              className="w-full p-2 border rounded"
-            />
-            <button
-              onClick={handleQuery}
-              disabled={!requestId || !question || loading}
-              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-300"
-            >
-              {loading ? 'Processing...' : 'Ask Question'}
-            </button>
-          </div>
-
-          {response && (
-            <div className="mt-4 p-4 bg-gray-50 rounded">
-              <h2 className="font-semibold mb-2">Response:</h2>
-              <p className="whitespace-pre-wrap">{response}</p>
+          {isSidebarCollapsed && (
+            <div className="p-2 flex flex-col items-center gap-2">
+              <button className="p-1 text-[10px] hover:bg-[#2d2d2d] rounded w-full text-center">🔍</button>
             </div>
           )}
+        </div>
+
+        {/* Right Section - Stacked Panels */}
+        <div className="flex-1 flex flex-col gap-2">
+          {/* Middle Panel - Chat */}
+          <div className="h-1/2 bg-[#2d2d2d] rounded-lg p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm">來源</h3>
+              <label 
+                className="px-4 py-2 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm cursor-pointer inline-block"
+              >
+                {loading ? '上傳中...' : '上傳來源'}
+                <input
+                  type="file"
+                  accept=".txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={loading}
+                />
+              </label>
+            </div>
+
+            {files.length > 0 ? (
+              <div className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-2 px-2">
+                  <label className="flex items-center justify-between w-full h-8">
+                    <span className="text-sm">選取所有來源</span>
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        className="w-5 h-5 accent-[#2d2d2d]"
+                        checked={selectedFiles.size === files.length}
+                        onChange={() => {
+                          if (selectedFiles.size === files.length) {
+                            setSelectedFiles(new Set());
+                          } else {
+                            setSelectedFiles(new Set(files.map(f => f.name)));
+                          }
+                        }}
+                      />
+                    </div>
+                  </label>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  {files.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between px-2 py-2.5 hover:bg-[#3d3d3d] cursor-pointer mb-2 h-10"
+                      onClick={() => toggleFileSelection(file.name)}
+                    >
+                      <span className="text-sm">📄 {file.name}</span>
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          className="w-5 h-5 accent-[#2d2d2d]"
+                          checked={selectedFiles.has(file.name)}
+                          onChange={() => toggleFileSelection(file.name)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end mt-4">
+                  <button
+                    className="px-4 py-2 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleQuery}
+                    disabled={loading || selectedFiles.size === 0}
+                  >
+                    處理
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-gray-400 text-sm">
+                  {loading ? '處理中...' : '新增來源即可開始使用'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Panel - Studio */}
+          <div className="h-1/2 bg-[#2d2d2d] rounded-lg p-4 flex flex-col">
+            <div>
+              <h3 className="text-sm mb-4 flex items-center justify-between">
+                輸出結果
+              </h3>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-400 text-sm">處理中...</p>
+                </div>
+              ) : (response.submittedDate || response.finedAmount) ? (
+                <div className="space-y-4 text-sm">
+                  {response.submittedDate && (
+                    <div>
+                      <p className="text-gray-400 mb-1">檔案提交日期：</p>
+                      <p className="pl-4">{response.submittedDate}</p>
+                    </div>
+                  )}
+                  {response.finedAmount && (
+                    <div>
+                      <p className="text-gray-400 mb-1">罰款金額：</p>
+                      <p className="pl-4">{response.finedAmount}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-400 text-sm">選取來源並處理後即可顯示結果</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </main>
   );
-} 
+}
