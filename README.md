@@ -49,9 +49,9 @@ uvicorn main:app --reload
 ```
 
 <!-- 6. Copy `.env.example` to `.env` and fill in your AWS credentials:
-   ```bash
-   cp .env.example .env
-   ``` -->
+```bash
+cp .env.example .env
+``` -->
 
 6. Start the backend server:
 ```bash
