@@ -13,6 +13,7 @@ export default function Home() {
       date: string;
       category: string;
       finedAmount: string;
+      uploadDate: string;
     }>;
   }>({});
   const [loading, setLoading] = useState(false);
@@ -79,6 +80,21 @@ export default function Home() {
     return match ? match[1] : fileName;
   };
 
+  const extractUploadDate = (fileName: string) => {
+    // 從檔名中提取日期 (例如: c000980113011140304.pdf -> 114年3月4日)
+    const match = fileName.match(/(\d{3})(\d{2})(\d{2})\.pdf$/);
+    if (!match) {
+      console.log('No match for filename:', fileName); // 用於除錯
+      return "未知日期";
+    }
+    
+    const [_, year, month, day] = match;
+    // 移除月份和日期前面的0
+    const cleanMonth = month.replace(/^0+/, '');
+    const cleanDay = day.replace(/^0+/, '');
+    return `${year}年${cleanMonth}月${cleanDay}日`;
+  };
+
   const handleQuery = async () => {
     if (!requestId || selectedFiles.size === 0) return;
 
@@ -137,7 +153,8 @@ export default function Home() {
           companyCode: extractCompanyCode(result.fileName),
           date: result.date,
           category: classificationResult?.category || "",
-          finedAmount: fineResult?.response || "無"
+          finedAmount: fineResult?.response || "無",
+          uploadDate: extractUploadDate(result.fileName)
         };
       });
 
@@ -353,7 +370,9 @@ export default function Home() {
                       <p className="text-gray-400 mb-1">公司代號：{result.companyCode}</p>
                       <p className="text-gray-400 mb-1">分類結果：</p>
                       <p className="pl-4 mb-2">{result.category}</p>
-                      <p className="text-gray-400 mb-1">檔案提交日期：</p>
+                      <p className="text-gray-400 mb-1">檔案上傳日期：</p>
+                      <p className="pl-4 mb-2">{result.uploadDate}</p>
+                      <p className="text-gray-400 mb-1">內控聲明書簽署日期：</p>
                       <p className="pl-4 mb-2">{result.date}</p>
                       <p className="text-gray-400 mb-1">罰款金額：</p>
                       <p className="pl-4">{result.finedAmount || "無"}</p>
