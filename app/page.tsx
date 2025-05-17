@@ -8,8 +8,12 @@ export default function Home() {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [fileContents, setFileContents] = useState<{ [key: string]: string }>({});
   const [response, setResponse] = useState<{
-    submittedDate?: string;
-    finedAmount?: string;
+    results?: Array<{
+      companyCode: string;
+      date: string;
+      category: string;
+      finedAmount: string;
+    }>;
   }>({});
   const [loading, setLoading] = useState(false);
   const [requestId, setRequestId] = useState('');
@@ -115,10 +119,23 @@ export default function Home() {
       });
       const fineData = await fineResponse.json();
 
-      setResponse({
-          submittedDate: dateData.response,
-        finedAmount: fineData.response,
+      // Combine results
+      const results = dateData.results.map((result: any) => {
+        const classificationResult = classificationData.results.find(
+          (c: any) => c.fileName === result.fileName
+        );
+        const fineResult = fineData.results.find(
+          (b: any) => b.fileName === result.fileName
+        );
+        return {
+          companyCode: extractCompanyCode(result.fileName),
+          date: result.date,
+          category: classificationResult?.category || "",
+          finedAmount: fineResult?.response || "無"
+        };
       });
+
+      setResponse({ results });
     } catch (error) {
       console.error('Error querying:', error);
     } finally {
@@ -247,20 +264,19 @@ export default function Home() {
                 <div className="flex items-center justify-center h-full">
                   <p className="text-gray-400 text-sm">處理中...</p>
                 </div>
-              ) : (response.submittedDate || response.finedAmount) ? (
-                <div className="space-y-4 text-sm">
-                  {response.submittedDate && (
-                    <div>
+              ) : response.results && response.results.length > 0 ? (
+                <div className="space-y-6 text-sm">
+                  {response.results.map((result, index) => (
+                    <div key={index} className="border-b border-gray-700 pb-4 last:border-b-0">
+                      <p className="text-gray-400 mb-1">公司代號：{result.companyCode}</p>
+                      <p className="text-gray-400 mb-1">分類結果：</p>
+                      <p className="pl-4 mb-2">{result.category}</p>
                       <p className="text-gray-400 mb-1">檔案提交日期：</p>
-                      <p className="pl-4">{response.submittedDate}</p>
-                    </div>
-                  )}
-                  {response.finedAmount && (
-                    <div>
+                      <p className="pl-4 mb-2">{result.date}</p>
                       <p className="text-gray-400 mb-1">罰款金額：</p>
-                      <p className="pl-4">{response.finedAmount}</p>
+                      <p className="pl-4">{result.finedAmount || "無"}</p>
                     </div>
-                  )}
+                  ))}
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
