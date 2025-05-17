@@ -168,7 +168,7 @@ export default function Home() {
                 {loading ? '上傳中...' : '上傳來源'}
                 <input
                   type="file"
-                  accept=".txt"
+                  accept=".pdf"
                   onChange={handleFileUpload}
                   className="hidden"
                   disabled={loading}
