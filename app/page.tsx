@@ -19,6 +19,7 @@ export default function Home() {
   const [requestId, setRequestId] = useState('');
   const [chunks, setChunks] = useState(0);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [storeSuccess, setStoreSuccess] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -143,6 +144,66 @@ export default function Home() {
     }
   };
 
+  const handleStoreResult = async () => {
+    if (!response.results || response.results.length === 0) {
+      alert('請確保所有結果都已產生');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const storeResponse = await fetch('http://localhost:8000/storeResult', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          results: response.results,
+        }),
+      });
+
+      const data = await storeResponse.json();
+      if (storeResponse.ok) {
+        setStoreSuccess(true);
+        alert('結果已成功儲存');
+      } else {
+        throw new Error(data.detail || '儲存失敗');
+      }
+    } catch (error) {
+      console.error('Error storing result:', error);
+      alert('儲存結果時發生錯誤');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/downloadResults');
+      if (!response.ok) {
+        throw new Error('下載失敗');
+      }
+      
+      // Create a blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'internal_control_results.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('下載檔案時發生錯誤');
+    }
+  };
+
   return (
     <main className="h-screen bg-[#1e1e1e] text-white flex flex-col p-2 gap-2">
       <div className="flex gap-2">
@@ -257,6 +318,21 @@ export default function Home() {
             <div>
               <h3 className="text-sm mb-4 flex items-center justify-between">
                 輸出結果
+                <div className="flex gap-2">
+                  <button
+                    className="px-4 py-1 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm"
+                    onClick={handleStoreResult}
+                    disabled={loading || !response.results || response.results.length === 0}
+                  >
+                    儲存結果
+                  </button>
+                  <button
+                    className="px-4 py-1 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm"
+                    onClick={handleDownload}
+                  >
+                    下載Excel
+                  </button>
+                </div>
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto">
