@@ -63,6 +63,12 @@ export default function Home() {
     setSelectedFiles(newSelection);
   };
 
+  const extractCompanyCode = (fileName: string) => {
+    // Extract company code from filename (e.g., "c000980113011140304.pdf" -> "000980", "c0009A0109011100325.pdf" -> "0009A0")
+    const match = fileName.match(/^c([0-9A-Z]{6})/);
+    return match ? match[1] : fileName;
+  };
+
   const handleQuery = async () => {
     if (!requestId || selectedFiles.size === 0) return;
 
