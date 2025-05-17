@@ -370,10 +370,10 @@ export default function Home() {
                       <p className="text-gray-400 mb-1">公司代號：{result.companyCode}</p>
                       <p className="text-gray-400 mb-1">分類結果：</p>
                       <p className="pl-4 mb-2">{result.category}</p>
-                      <p className="text-gray-400 mb-1">檔案上傳日期：</p>
-                      <p className="pl-4 mb-2">{result.uploadDate}</p>
                       <p className="text-gray-400 mb-1">內控聲明書簽署日期：</p>
                       <p className="pl-4 mb-2">{result.date}</p>
+                      <p className="text-gray-400 mb-1">檔案上傳日期：</p>
+                      <p className="pl-4 mb-2">{result.uploadDate}</p>
                       <p className="text-gray-400 mb-1">罰款金額：</p>
                       <p className="pl-4">{result.finedAmount || "無"}</p>
                     </div>
