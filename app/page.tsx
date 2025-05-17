@@ -22,39 +22,44 @@ export default function Home() {
   const [storeSuccess, setStoreSuccess] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFiles(prevFiles => [...prevFiles, selectedFile]);
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setFiles(prevFiles => [...prevFiles, ...newFiles]);
       
-      // Read file contents
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setFileContents(prev => ({
-          ...prev,
-          [selectedFile.name]: content
-        }));
-      };
-      reader.readAsArrayBuffer(selectedFile);
+      // Read file contents for each file
+      newFiles.forEach(selectedFile => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          setFileContents(prev => ({
+            ...prev,
+            [selectedFile.name]: content
+          }));
+        };
+        reader.readAsArrayBuffer(selectedFile);
 
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
 
-      try {
-        setLoading(true);
-        const response = await fetch('http://localhost:8000/upload', {
-          method: 'POST',
-          body: formData,
-        });
+        // Upload each file
+        (async () => {
+          try {
+            setLoading(true);
+            const response = await fetch('http://localhost:8000/upload', {
+              method: 'POST',
+              body: formData,
+            });
 
-        const data = await response.json();
-        setRequestId(data.request_id);
-        setChunks(data.chunks);
-      } catch (error) {
-        console.error('Error uploading file:', error);
-      } finally {
-        setLoading(false);
-      }
+            const data = await response.json();
+            setRequestId(data.request_id);
+            setChunks(data.chunks);
+          } catch (error) {
+            console.error('Error uploading file:', error);
+          } finally {
+            setLoading(false);
+          }
+        })();
+      });
     }
   };
 
@@ -250,6 +255,7 @@ export default function Home() {
                   onChange={handleFileUpload}
                   className="hidden"
                   disabled={loading}
+                  multiple
                 />
               </label>
             </div>
