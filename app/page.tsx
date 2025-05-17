@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [fileContents, setFileContents] = useState<{ [key: string]: string }>({});
   const [response, setResponse] = useState<{
     submittedDate?: string;
     finedAmount?: string;
@@ -20,6 +21,17 @@ export default function Home() {
       const selectedFile = e.target.files[0];
       setFiles(prevFiles => [...prevFiles, selectedFile]);
       
+      // Read file contents
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setFileContents(prev => ({
+          ...prev,
+          [selectedFile.name]: content
+        }));
+      };
+      reader.readAsArrayBuffer(selectedFile);
+
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -58,7 +70,10 @@ export default function Home() {
       setLoading(true);
       setResponse({}); // Clear previous responses
 
-      // Query for submitted date
+      // Convert selectedFiles Set to Array
+      const selectedFileNames = Array.from(selectedFiles);
+
+      // Extract date
       const dateResponse = await fetch('http://localhost:8000/query', {
         method: 'POST',
         headers: {
@@ -100,7 +115,7 @@ export default function Home() {
       <div className="flex gap-2">
         {/* Header - Source */}
         <div className={`border-r border-gray-700 flex items-center justify-between px-4 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-12' : 'w-[280px] min-w-[280px]'}`}>
-          <h2 className={`text-lg truncate p-4 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>券輔部AI平台</h2>
+          <h2 className={`text-lg truncate p-4 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>券輔部AI小幫手</h2>
           <button 
             className="p-0.5 text-[10px] hover:bg-[#2d2d2d] rounded"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -115,7 +130,7 @@ export default function Home() {
         <div className={`border-r border-gray-700 flex flex-col transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-12 min-w-12' : 'w-[280px] min-w-[280px]'}`}>
           <div className={`p-4 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>
             <div className="mb-4">
-              <button className="w-full flex items-center gap-2 px-4 py-2 text-sm bg-[#2d2d2d] rounded-md hover:bg-[#3d3d3d]">內控聲明書小幫手</button>
+              <button className="w-full flex items-center gap-2 px-4 py-2 text-sm bg-[#2d2d2d] rounded-md hover:bg-[#3d3d3d]">內控聲明書</button>
             </div>
           </div>
           {isSidebarCollapsed && (
