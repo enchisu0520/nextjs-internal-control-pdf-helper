@@ -74,14 +74,13 @@ export default function Home() {
       const selectedFileNames = Array.from(selectedFiles);
 
       // Extract date
-      const dateResponse = await fetch('http://localhost:8000/query', {
+      const dateResponse = await fetch('http://localhost:8000/extractDate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          request_id: requestId,
-          question: "請用繁體中文回答，檔案的提交日期是什麼？請以「民國xx年xx月xx日」的格式回答",
+          fileNames: selectedFileNames,
         }),
       });
       const dateData = await dateResponse.json();
