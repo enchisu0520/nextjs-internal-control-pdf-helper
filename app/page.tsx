@@ -85,15 +85,14 @@ export default function Home() {
       });
       const dateData = await dateResponse.json();
 
-      // Query for fined amount
-      const fineResponse = await fetch('http://localhost:8000/query', {
+      // Get fined amount
+      const fineResponse = await fetch('http://localhost:8000/findFineAmount', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          request_id: requestId,
-          question: "請用繁體中文回答，證券商被罰款多少錢？請以「新臺幣xx萬元」的格式回答",
+          fileNames: selectedFileNames,
         }),
       });
       const fineData = await fineResponse.json();
