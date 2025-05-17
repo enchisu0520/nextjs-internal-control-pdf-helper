@@ -85,6 +85,18 @@ export default function Home() {
       });
       const dateData = await dateResponse.json();
 
+      // Get classification
+      const classificationResponse = await fetch('http://localhost:8000/classifyText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileNames: selectedFileNames,
+        }),
+      });
+      const classificationData = await classificationResponse.json();
+
       // Get fined amount
       const fineResponse = await fetch('http://localhost:8000/findFineAmount', {
         method: 'POST',
@@ -98,7 +110,7 @@ export default function Home() {
       const fineData = await fineResponse.json();
 
       setResponse({
-        submittedDate: dateData.response,
+          submittedDate: dateData.response,
         finedAmount: fineData.response,
       });
     } catch (error) {
