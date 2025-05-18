@@ -38,29 +38,35 @@ export default function Home() {
           }));
         };
         reader.readAsArrayBuffer(selectedFile);
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        // Upload each file
-        (async () => {
-          try {
-            setLoading(true);
-            const response = await fetch('http://localhost:8000/upload', {
-              method: 'POST',
-              body: formData,
-            });
-
-            const data = await response.json();
-            setRequestId(data.request_id);
-            setChunks(data.chunks);
-          } catch (error) {
-            console.error('Error uploading file:', error);
-          } finally {
-            setLoading(false);
-          }
-        })();
       });
+
+      // Upload all files and wait for all to complete
+      try {
+        setLoading(true);
+        const uploadPromises = newFiles.map(async (selectedFile) => {
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          
+          const response = await fetch('http://localhost:8000/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+          return data;
+        });
+
+        const results = await Promise.all(uploadPromises);
+        
+        // Use the last request_id and chunks from the results
+        const lastResult = results[results.length - 1];
+        setRequestId(lastResult.request_id);
+        setChunks(lastResult.chunks);
+      } catch (error) {
+        console.error('Error uploading files:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
