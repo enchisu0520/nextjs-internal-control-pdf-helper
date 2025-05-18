@@ -349,14 +349,14 @@ export default function Home() {
                 輸出結果
                 <div className="flex gap-2">
                   <button
-                    className="px-4 py-1 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm"
+                    className="px-4 py-2 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleStoreResult}
                     disabled={loading || !response.results || response.results.length === 0}
                   >
                     儲存結果
                   </button>
                   <button
-                    className="px-4 py-1 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm"
+                    className="px-4 py-2 bg-[#1e1e1e] rounded-md hover:bg-[#3d3d3d] text-sm"
                     onClick={handleDownload}
                   >
                     下載Excel
