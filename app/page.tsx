@@ -265,7 +265,7 @@ export default function Home() {
         {/* Right Section - Stacked Panels */}
         <div className="flex-1 flex flex-col gap-2">
           {/* Middle Panel - Chat */}
-          <div className="h-1/2 bg-[#2d2d2d] rounded-lg p-4 flex flex-col">
+          <div className="h-[400px] bg-[#2d2d2d] rounded-lg p-4 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm">來源</h3>
               <label 
@@ -343,7 +343,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Panel - Studio */}
-          <div className="h-1/2 bg-[#2d2d2d] rounded-lg p-4 flex flex-col">
+          <div className="flex-1 bg-[#2d2d2d] rounded-lg p-4 flex flex-col">
             <div>
               <h3 className="text-sm mb-4 flex items-center justify-between">
                 輸出結果
